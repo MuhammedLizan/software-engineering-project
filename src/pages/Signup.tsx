@@ -19,7 +19,8 @@ export default function Signup() {
     setError(null);
 
     // Pre-made admin check
-    const finalRole = email.toLowerCase() === 'admin@example.com' ? 'admin' : role;
+    const isAdminEmail = email.toLowerCase() === 'admin@example.com' || email.toLowerCase() === 'audit@example.com';
+    const finalRole = isAdminEmail ? 'admin' : role;
 
     try {
       const { data, error: authError } = await supabase.auth.signUp({

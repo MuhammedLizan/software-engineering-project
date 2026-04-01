@@ -8,10 +8,17 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) {
+      setError('Account temporarily locked due to multiple failed attempts. Please try again later.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -21,7 +28,37 @@ export default function Login() {
         password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Log failed login attempt
+        await supabase.from('audit_logs').insert([
+          {
+            action: 'FAILED_LOGIN',
+            details: `Failed login attempt for email: ${email}`,
+          }
+        ]);
+
+        // Track failed attempts for admin
+        if (email.toLowerCase() === 'admin@example.com' || email.toLowerCase() === 'audit@example.com') {
+          const newAttempts = failedAttempts + 1;
+          setFailedAttempts(newAttempts);
+
+          if (newAttempts >= 5) {
+            setIsLocked(true);
+            // Log brute force attempt to audit logs
+            await supabase.from('audit_logs').insert([
+              {
+                action: 'SECURITY_ALERT',
+                details: `Potential brute force attempt detected on admin account from email: ${email}`,
+              }
+            ]);
+            throw new Error('Security Alert: Multiple failed attempts detected. Admin has been notified.');
+          }
+        }
+        throw authError;
+      }
+
+      // Reset attempts on success
+      setFailedAttempts(0);
 
       // Fetch profile to redirect correctly
       const { data: profile, error: profileError } = await supabase
@@ -67,9 +104,16 @@ export default function Login() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleLogin}>
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4 flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-400" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className={`p-4 flex items-center gap-3 border-l-4 ${
+                isLocked ? 'bg-orange-50 border-orange-400' : 'bg-red-50 border-red-400'
+              }`}>
+                <AlertCircle className={`w-5 h-5 ${isLocked ? 'text-orange-400' : 'text-red-400'}`} />
+                <div>
+                  <p className={`text-sm font-bold ${isLocked ? 'text-orange-800' : 'text-red-800'}`}>
+                    {isLocked ? 'Security Alert' : 'Error'}
+                  </p>
+                  <p className={`text-sm ${isLocked ? 'text-orange-700' : 'text-red-700'}`}>{error}</p>
+                </div>
               </div>
             )}
 

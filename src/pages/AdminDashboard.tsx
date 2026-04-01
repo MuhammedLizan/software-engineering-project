@@ -335,13 +335,21 @@ export default function AdminDashboard() {
               {logs.map((log) => (
                 <div key={log.id} className="flex gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-gray-400" />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      log.action === 'SECURITY_ALERT' ? 'bg-red-50' : 'bg-gray-50'
+                    }`}>
+                      <Shield className={`w-4 h-4 ${
+                        log.action === 'SECURITY_ALERT' ? 'text-red-500' : 'text-gray-400'
+                      }`} />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{log.action}</p>
-                    <p className="text-xs text-gray-500 truncate">{log.details}</p>
+                    <p className={`text-sm font-bold truncate ${
+                      log.action === 'SECURITY_ALERT' ? 'text-red-600' : 'text-gray-900'
+                    }`}>{log.action}</p>
+                    <p className={`text-xs truncate ${
+                      log.action === 'SECURITY_ALERT' ? 'text-red-500' : 'text-gray-500'
+                    }`}>{log.details}</p>
                     <p className="text-[10px] text-gray-400 mt-1">
                       {new Date(log.timestamp).toLocaleString()}
                     </p>
