@@ -6,7 +6,6 @@ import Layout from './components/Layout';
 
 // Pages
 import Login from './pages/Login';
-import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
@@ -21,7 +20,6 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
 
           {/* Admin Routes */}
           <Route

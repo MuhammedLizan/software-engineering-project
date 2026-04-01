@@ -217,10 +217,11 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {[
                     { id: 'student', name: 'Student', icon: GraduationCap },
                     { id: 'faculty', name: 'Faculty', icon: Briefcase },
+                    { id: 'admin', name: 'Admin', icon: Shield },
                   ].map((r) => {
                     const Icon = r.icon;
                     return (
