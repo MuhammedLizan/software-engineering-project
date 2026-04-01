@@ -1,0 +1,5 @@
+{
+  "name": "Attendance Management System",
+  "description": "A cloud-based attendance system with QR code scanning and role-based access control.",
+  "requestFramePermissions": ["camera"]
+}
