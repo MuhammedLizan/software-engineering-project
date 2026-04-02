@@ -1,20 +1,58 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# QR-Based Attendance Management System
 
-# Run and deploy your AI Studio app
+## Overview
+The QR-Based Attendance Management System is a secure web application developed to automate and manage student attendance using dynamically generated QR codes. The system supports role-based access for Admin, Faculty, and Students, and is deployed as a cloud-based web application using Netlify and Supabase.
 
-This contains everything you need to run your app locally.
+This project was developed as part of the Secure Software Engineering course.
 
-View your app in AI Studio: https://ai.studio/apps/4ef21b8d-c2b0-48e6-93d9-20fadc070795
+---
 
-## Run Locally
+## Features
 
-**Prerequisites:**  Node.js
+### User Management
+- Admin can add, update, and remove users (Students and Faculty)
+- Role-based access control (Admin, Faculty, Student)
+- Secure authentication using Supabase Auth
+- Profile management for users
 
+### QR-Based Attendance System
+- Faculty generates a time-limited QR code for attendance
+- Students scan QR code to mark attendance
+- QR code expires after a specific time to prevent misuse
+- Faculty confirms attendance before final submission
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Attendance Management
+- Attendance stored per session, course, and student
+- Prevents duplicate attendance marking
+- Attendance status: Present, Late, Absent
+- Attendance records stored securely in database
+
+### Reports
+- Student attendance report
+- Course/class attendance report
+- Attendance percentage calculation
+- Session-wise attendance tracking
+
+### Security Features
+This system includes multiple secure software engineering features:
+- Role-Based Access Control (RBAC)
+- Row Level Security (RLS) policies in database
+- Brute force login detection (failed login tracking)
+- Account lock mechanism
+- Audit logging system (user actions logged)
+- Secure authentication (Supabase)
+- HTTPS secure communication (Netlify)
+- QR code expiry mechanism
+- Input validation and access control policies
+
+### Audit Logging
+The system logs important actions such as:
+- Login attempts
+- QR generation
+- Attendance marking
+- User creation/deletion
+- Admin actions
+
+---
+
+## System Architecture
