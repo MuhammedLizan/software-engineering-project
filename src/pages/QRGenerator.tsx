@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { QrCode, Clock, AlertCircle, CheckCircle, Copy, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { QrCode, Clock, AlertCircle, CheckCircle, Copy } from 'lucide-react';
 
 export default function QRGenerator() {
   const { user } = useAuth();
@@ -13,7 +13,6 @@ export default function QRGenerator() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [attendanceCount, setAttendanceCount] = useState(0);
-  const [allowManualEntry, setAllowManualEntry] = useState(false);
 
   useEffect(() => {
     if (session?.id) {
@@ -57,7 +56,6 @@ export default function QRGenerator() {
             start_time: startTime.toISOString(),
             expiry_time: expiryTime.toISOString(),
             status: 'active',
-            allow_manual_entry: allowManualEntry,
           },
         ])
         .select()
@@ -104,7 +102,6 @@ export default function QRGenerator() {
             start_time: startTime.toISOString(),
             expiry_time: expiryTime.toISOString(),
             status: 'active',
-            allow_manual_entry: session.allow_manual_entry,
           },
         ])
         .select()
@@ -140,22 +137,6 @@ export default function QRGenerator() {
       navigate('/faculty');
     } catch (error) {
       console.error('Error confirming session:', error);
-    }
-  };
-
-  const toggleManualEntry = async () => {
-    if (!session) return;
-    const newValue = !session.allow_manual_entry;
-    try {
-      const { error } = await supabase
-        .from('qr_sessions')
-        .update({ allow_manual_entry: newValue })
-        .eq('id', session.id);
-
-      if (error) throw error;
-      setSession({ ...session, allow_manual_entry: newValue });
-    } catch (error) {
-      console.error('Error toggling manual entry:', error);
     }
   };
 
@@ -201,32 +182,6 @@ export default function QRGenerator() {
               <p className="text-sm text-gray-500 uppercase tracking-wider font-medium">Expires In</p>
               <p className="text-3xl font-bold text-gray-900">{expiryMinutes}m</p>
             </div>
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {session.allow_manual_entry ? (
-                <ShieldCheck className="w-5 h-5 text-green-500" />
-              ) : (
-                <ShieldAlert className="w-5 h-5 text-gray-400" />
-              )}
-              <div className="text-left">
-                <p className="text-sm font-medium text-gray-900">Manual Entry</p>
-                <p className="text-xs text-gray-500">
-                  {session.allow_manual_entry ? 'Enabled for students' : 'Disabled for students'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={toggleManualEntry}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                session.allow_manual_entry
-                  ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                  : 'bg-green-50 text-green-600 hover:bg-green-100'
-              }`}
-            >
-              {session.allow_manual_entry ? 'Disable' : 'Enable'}
-            </button>
           </div>
           <div className="pt-6 flex flex-col gap-3">
             <div className="flex gap-4">
@@ -304,29 +259,6 @@ export default function QRGenerator() {
             <p className="text-xs text-blue-700 leading-relaxed">
               The QR code will automatically expire after {expiryMinutes} minutes. Students must scan it within this timeframe.
             </p>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Allow Manual Entry</p>
-                <p className="text-xs text-gray-500">Let students enter ID if scan fails</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAllowManualEntry(!allowManualEntry)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                allowManualEntry ? 'bg-indigo-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  allowManualEntry ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
           </div>
 
           <button

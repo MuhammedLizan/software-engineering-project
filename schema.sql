@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS qr_sessions (
   start_time TIMESTAMP WITH TIME ZONE NOT NULL,
   expiry_time TIMESTAMP WITH TIME ZONE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('active', 'expired', 'confirmed')),
-  allow_manual_entry BOOLEAN DEFAULT FALSE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 

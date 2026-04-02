@@ -11,8 +11,6 @@ export default function QRScanner() {
   const [scanning, setScanning] = useState(true);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const [manualId, setManualId] = useState('');
-  const [showManual, setShowManual] = useState(false);
 
   const handleScan = async (data: any) => {
     if (data && data.text && scanning && status === 'idle') {
@@ -21,7 +19,7 @@ export default function QRScanner() {
     }
   };
 
-  const processAttendance = async (sessionId: string, isManual: boolean = false) => {
+  const processAttendance = async (sessionId: string) => {
     if (!sessionId || sessionId === 'undefined') {
       setStatus('error');
       setMessage('Invalid QR code data.');
@@ -40,10 +38,6 @@ export default function QRScanner() {
 
       if (sessionError || !session) {
         throw new Error('Invalid QR code or session not found.');
-      }
-
-      if (isManual && !session.allow_manual_entry) {
-        throw new Error('Manual entry is not enabled for this session. Please scan the QR code.');
       }
 
       if (session.status !== 'active') {
@@ -114,7 +108,7 @@ export default function QRScanner() {
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative aspect-square">
-        {scanning && status === 'idle' && !showManual && (
+        {scanning && status === 'idle' && (
           <QrScanner
             delay={200}
             onError={handleError}
@@ -124,36 +118,6 @@ export default function QRScanner() {
             }}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
-        )}
-
-        {showManual && status === 'idle' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white">
-            <QrCode className="w-12 h-12 text-indigo-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Manual Entry</h3>
-            <p className="text-sm text-gray-500 mb-6">Enter the session ID provided by your faculty</p>
-            <input
-              type="text"
-              value={manualId}
-              onChange={(e) => setManualId(e.target.value)}
-              placeholder="Enter Session ID"
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-4"
-            />
-            <div className="flex gap-3 w-full">
-              <button
-                onClick={() => setShowManual(false)}
-                className="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Back
-              </button>
-              <button
-                onClick={() => processAttendance(manualId, true)}
-                disabled={!manualId}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              >
-                Submit
-              </button>
-            </div>
-          </div>
         )}
 
         {status !== 'idle' && (
@@ -206,14 +170,6 @@ export default function QRScanner() {
       </div>
 
       <div className="bg-indigo-50 p-4 rounded-xl flex flex-col gap-3">
-        {!showManual && status === 'idle' && (
-          <button
-            onClick={() => setShowManual(true)}
-            className="w-full py-2 px-4 bg-white border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors text-sm font-medium mb-2"
-          >
-            Can't scan? Enter ID manually
-          </button>
-        )}
         <div className="flex gap-3">
           <QrCode className="w-5 h-5 text-indigo-600 flex-shrink-0" />
           <p className="text-xs text-indigo-700 leading-relaxed">
