@@ -63,6 +63,7 @@ export default function QRGenerator() {
 
       if (error) throw error;
       setSession(data);
+      setAttendanceCount(0);
       
       // Log session creation
       await supabase.from('audit_logs').insert([
@@ -74,6 +75,51 @@ export default function QRGenerator() {
       ]);
     } catch (error) {
       console.error('Error creating session:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshSession = async () => {
+    if (!session) return;
+    setLoading(true);
+    try {
+      // Expire old session first
+      await supabase
+        .from('qr_sessions')
+        .update({ status: 'expired' })
+        .eq('id', session.id);
+
+      const startTime = new Date();
+      const expiryTime = new Date(startTime.getTime() + expiryMinutes * 60000);
+
+      const { data, error } = await supabase
+        .from('qr_sessions')
+        .insert([
+          {
+            faculty_id: user?.id,
+            course_id: courseId,
+            start_time: startTime.toISOString(),
+            expiry_time: expiryTime.toISOString(),
+            status: 'active',
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setSession(data);
+      setAttendanceCount(0);
+
+      await supabase.from('audit_logs').insert([
+        {
+          user_id: user?.id,
+          action: 'REFRESH_SESSION',
+          details: `Refreshed session for ${courseId}`,
+        },
+      ]);
+    } catch (error) {
+      console.error('Error refreshing session:', error);
     } finally {
       setLoading(false);
     }
@@ -105,7 +151,7 @@ export default function QRGenerator() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{session.course_id}</h2>
-            <p className="text-gray-500">Scan this QR code to mark attendance</p>
+            <p className="text-gray-500 mt-1">Scan this QR code to mark attendance</p>
           </div>
           <div className="flex justify-center gap-8">
             <div className="text-center">
@@ -117,16 +163,26 @@ export default function QRGenerator() {
               <p className="text-3xl font-bold text-gray-900">{expiryMinutes}m</p>
             </div>
           </div>
-          <div className="pt-6 flex gap-4">
-            <button
-              onClick={() => setSession(null)}
-              className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-            >
-              Cancel
-            </button>
+          <div className="pt-6 flex flex-col gap-3">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSession(null)}
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={refreshSession}
+                disabled={loading}
+                className="flex-1 px-4 py-3 border border-indigo-200 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <QrCode className="w-5 h-5" />
+                Refresh QR
+              </button>
+            </div>
             <button
               onClick={confirmSession}
-              className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
             >
               <CheckCircle className="w-5 h-5" />
               Confirm Attendance

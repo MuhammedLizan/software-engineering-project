@@ -81,9 +81,19 @@ export default function QRScanner() {
   };
 
   const handleError = (err: any) => {
-    console.error(err);
+    console.error('Camera Error:', err);
     setStatus('error');
-    setMessage('Camera access denied or error occurred.');
+    
+    let errorMsg = 'Camera access denied or error occurred.';
+    if (err?.name === 'NotAllowedError') {
+      errorMsg = 'Camera permission was denied. Please enable it in your browser settings.';
+    } else if (err?.name === 'NotFoundError') {
+      errorMsg = 'No camera found on this device.';
+    } else if (window.location.protocol !== 'https:') {
+      errorMsg = 'Camera access requires a secure (HTTPS) connection.';
+    }
+    
+    setMessage(errorMsg);
   };
 
   return (
@@ -99,6 +109,9 @@ export default function QRScanner() {
             delay={300}
             onError={handleError}
             onScan={handleScan}
+            constraints={{
+              video: { facingMode: 'environment' }
+            }}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         )}
@@ -152,11 +165,18 @@ export default function QRScanner() {
         )}
       </div>
 
-      <div className="bg-indigo-50 p-4 rounded-xl flex gap-3">
-        <QrCode className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-        <p className="text-xs text-indigo-700 leading-relaxed">
-          Ensure you are in a well-lit environment and the QR code is clearly visible in the frame.
-        </p>
+      <div className="bg-indigo-50 p-4 rounded-xl flex flex-col gap-3">
+        <div className="flex gap-3">
+          <QrCode className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+          <p className="text-xs text-indigo-700 leading-relaxed">
+            Ensure you are in a well-lit environment and the QR code is clearly visible in the frame.
+          </p>
+        </div>
+        <div className="pt-2 border-t border-indigo-100">
+          <p className="text-[10px] text-indigo-500 italic">
+            Tip: If the camera doesn't load, ensure you've granted camera permissions in your browser settings and are using a secure (HTTPS) connection.
+          </p>
+        </div>
       </div>
     </div>
   );
