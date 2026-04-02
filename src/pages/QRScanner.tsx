@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import QrScanner from 'react-qr-scanner';
+import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { QrCode, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
@@ -11,17 +11,54 @@ export default function QRScanner() {
   const [scanning, setScanning] = useState(true);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  const handleScan = async (data: any) => {
-    if (data && scanning && status === 'idle') {
-      // Handle both string and object results from different scanner versions
-      const scannedText = typeof data === 'string' ? data : data.text;
-      if (scannedText) {
-        console.log('Scanned QR Data:', scannedText);
-        processAttendance(scannedText);
-      }
+  useEffect(() => {
+    // Initialize scanner only when idle and scanning is true
+    if (scanning && status === 'idle') {
+      const startScanner = async () => {
+        try {
+          // Small delay to ensure the DOM element is ready
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const html5QrCode = new Html5Qrcode("reader");
+          scannerRef.current = html5QrCode;
+          
+          const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+          };
+
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              console.log('Scanned QR Data:', decodedText);
+              // Stop scanner immediately on success
+              if (scannerRef.current?.isScanning) {
+                await scannerRef.current.stop();
+              }
+              processAttendance(decodedText);
+            },
+            (errorMessage) => {
+              // Ignore frequent scan errors (e.g. no QR in frame)
+            }
+          );
+        } catch (err) {
+          handleError(err);
+        }
+      };
+
+      startScanner();
     }
-  };
+
+    return () => {
+      if (scannerRef.current?.isScanning) {
+        scannerRef.current.stop().catch(err => console.error('Cleanup error:', err));
+      }
+    };
+  }, [scanning, status]);
 
   const processAttendance = async (sessionId: string) => {
     if (!sessionId || sessionId === 'undefined') {
@@ -70,7 +107,15 @@ export default function QRScanner() {
         throw attendanceError;
       }
 
-      // 3. Log the action
+      // 3. Get total attendance count for summary
+      const { count, error: countError } = await supabase
+        .from('attendance')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId);
+
+      if (countError) console.error('Error fetching count:', countError);
+
+      // 4. Log the action
       await supabase.from('audit_logs').insert([
         {
           user_id: user?.id,
@@ -80,8 +125,8 @@ export default function QRScanner() {
       ]);
 
       setStatus('success');
-      setMessage('Attendance marked successfully!');
-      setTimeout(() => navigate('/student'), 2000);
+      setMessage(`Attendance marked for ${session.course_id}, ${count || 0} students present`);
+      setTimeout(() => navigate('/student'), 3500);
     } catch (err: any) {
       setStatus('error');
       setMessage(err.message);
@@ -113,15 +158,7 @@ export default function QRScanner() {
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative aspect-square">
         {scanning && status === 'idle' && (
-          <QrScanner
-            delay={200}
-            onError={handleError}
-            onScan={handleScan}
-            constraints={{
-              video: { facingMode: 'environment' }
-            }}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+          <div id="reader" className="w-full h-full"></div>
         )}
 
         {status !== 'idle' && (
