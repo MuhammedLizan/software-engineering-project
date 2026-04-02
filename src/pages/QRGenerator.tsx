@@ -149,7 +149,7 @@ export default function QRGenerator() {
               <QRCodeSVG 
                 value={session.id} 
                 size={256}
-                level="H"
+                level="M"
                 includeMargin={true}
               />
             </div>

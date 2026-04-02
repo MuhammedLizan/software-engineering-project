@@ -13,9 +13,13 @@ export default function QRScanner() {
   const [message, setMessage] = useState('');
 
   const handleScan = async (data: any) => {
-    if (data && data.text && scanning && status === 'idle') {
-      console.log('Scanned QR Data:', data.text);
-      processAttendance(data.text);
+    if (data && scanning && status === 'idle') {
+      // Handle both string and object results from different scanner versions
+      const scannedText = typeof data === 'string' ? data : data.text;
+      if (scannedText) {
+        console.log('Scanned QR Data:', scannedText);
+        processAttendance(scannedText);
+      }
     }
   };
 
